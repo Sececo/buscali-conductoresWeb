@@ -186,7 +186,7 @@ export default function GestionConductores() {
           {/* Botón para editar conductor */}
         </div>
 
-        <div className='table container'>
+        <div className='table-container'>
           <table>
             {/* Tabla para mostrar conductores */}
             <thead>

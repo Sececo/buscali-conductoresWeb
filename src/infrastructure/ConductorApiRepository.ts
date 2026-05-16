@@ -2,13 +2,17 @@ import axios from 'axios';
 import type { Conductor } from '../domain/entities/Conductor';
 import type { ConductorRepository } from '../domain/repositories/ConductorRepository';
 
-/**
- * URL base del backend definida desde variables de entorno.
- *
- * Ejemplo:
- * VITE_API_URL=https://api.midominio.com
- */
-const API_URL = import.meta.env.VITE_API_URL;
+import { API_ORIGIN } from './axiosConfig';
+
+const CONDUCTORES_BASE = `${API_ORIGIN}/api/v1/conductores`;
+
+/** Error con lista de mensajes tal cual devuelve el backend (validación 400). */
+export class ApiValidationError extends Error {
+  constructor(public readonly errors: string[]) {
+    super(errors.filter(Boolean).join(' '));
+    this.name = 'ApiValidationError';
+  }
+}
 
 /**
  * Cliente HTTP principal.
@@ -74,6 +78,16 @@ function apiErrorMessage(err: unknown): string {
   return `Error ${err.response.status}`;
 }
 
+function throwFromAxios(e: unknown): never {
+  if (axios.isAxiosError(e) && e.response?.data) {
+    const data = e.response.data as { errors?: string[] };
+    if (Array.isArray(data.errors) && data.errors.length > 0) {
+      throw new ApiValidationError(data.errors);
+    }
+  }
+  throw new Error(apiErrorMessage(e));
+}
+
 /**
  * Repositorio de conductores conectado al backend.
  */
@@ -81,7 +95,7 @@ export class ConductorApiRepository implements ConductorRepository {
   async getAll(): Promise<Conductor[]> {
     try {
       const { data } = await api.get<ApiSuccess<Record<string, unknown>[]>>(
-        `${API_URL}/conductores`,
+        CONDUCTORES_BASE,
       );
 
       return unwrapList(data);
@@ -97,7 +111,7 @@ export class ConductorApiRepository implements ConductorRepository {
     const estado = conductor.estado === 'Inactivo' ? 'Inactivo' : 'Activo';
 
     try {
-      await api.post(`${API_URL}/conductores`, {
+      await api.post(CONDUCTORES_BASE, {
         cedula,
         nombre: conductor.nombre.trim(),
         correo_electronico: conductor.correo_electronico.trim(),
@@ -107,13 +121,15 @@ export class ConductorApiRepository implements ConductorRepository {
         estado,
       });
     } catch (e) {
-      throw new Error(apiErrorMessage(e));
+      throwFromAxios(e);
     }
   }
 
   async delete(cedula: string): Promise<void> {
     try {
-      await api.delete(`${API_URL}/conductores/${encodeURIComponent(cedula)}`);
+      await api.delete(
+        `${CONDUCTORES_BASE}/${encodeURIComponent(cedula)}`,
+      );
     } catch (e) {
       throw new Error(apiErrorMessage(e));
     }
@@ -145,11 +161,11 @@ export class ConductorApiRepository implements ConductorRepository {
 
     try {
       await api.put(
-        `${API_URL}/conductores/${encodeURIComponent(conductor.cedula)}`,
+        `${CONDUCTORES_BASE}/${encodeURIComponent(conductor.cedula)}`,
         body,
       );
     } catch (e) {
-      throw new Error(apiErrorMessage(e));
+      throwFromAxios(e);
     }
   }
 }

@@ -52,8 +52,8 @@ export default function Login() {
     }
 
     try {
-      // baseURL = VITE_API_URL en axiosConfig; el API real está bajo /api/v1/conductores
-      const response = await axios.post('/conductores/login', {
+      // baseURL = VITE_API_URL (origen, ej. http://localhost:3000). Rutas bajo /api/v1/conductores.
+      const response = await axios.post('/api/v1/conductores/login', {
         telefono,
         contrasena: password,
       });
@@ -73,7 +73,7 @@ export default function Login() {
       if (axios.isAxiosError(error)) {
         if (!error.response) {
           setError(
-            'No hay respuesta del servidor. Comprueba que el backend esté en marcha y que VITE_API_URL en .env sea el mismo puerto (ej. http://localhost:3001). Reinicia "npm run dev" del front tras cambiar .env.',
+            'No hay respuesta del servidor. Comprueba que el backend esté en marcha y que VITE_API_URL en .env coincida con el origen del API (ej. http://localhost:3000). Reinicia "npm run dev" del front tras cambiar .env.',
           );
           return;
         }
@@ -92,7 +92,7 @@ export default function Login() {
           setError(detail ? `Validación: ${detail}` : 'Datos inválidos');
         } else if (status === 404) {
           setError(
-            'Ruta del API no encontrada (404). Revisa que VITE_API_URL apunte al backend correcto.',
+            'Ruta del API no encontrada (404). Comprueba que el backend esté en marcha en el mismo host/puerto (por defecto http://localhost:3000) y que VITE_API_URL en .env coincida si lo personalizas.',
           );
         } else {
           setError(detail || `Error del servidor (${status})`);
