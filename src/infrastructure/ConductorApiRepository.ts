@@ -8,9 +8,12 @@ const CONDUCTORES_BASE = `${API_ORIGIN}/api/v1/conductores`;
 
 /** Error con lista de mensajes tal cual devuelve el backend (validación 400). */
 export class ApiValidationError extends Error {
-  constructor(public readonly errors: string[]) {
+  readonly errors: string[];
+
+  constructor(errors: string[]) {
     super(errors.filter(Boolean).join(' '));
     this.name = 'ApiValidationError';
+    this.errors = errors;
   }
 }
 
