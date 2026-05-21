@@ -1,72 +1,91 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 
-const ForgotPassword = () => {
-  const [telefono, setTelefono] = useState('');
+export default function ForgotPassword() {
+  const [correo, setCorreo] = useState('');
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  const handleSubmit = () => {
-    if (!telefono) {
-      alert('Por favor ingresa tu número de teléfono');
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    setSuccess('');
+
+    const email = correo.trim();
+    if (!email) {
+      setError('Ingresa tu correo electrónico');
       return;
     }
 
-    if (!/^3\d{9}$/.test(telefono)) {
-      alert('Ingresa un número válido (ej: 3001234567)');
-      return;
+    setLoading(true);
+    try {
+      await axios.post('/api/v1/conductores/forgot-password', {
+        correo_electronico: email,
+      });
+      setSuccess(
+        'Si el correo está registrado, recibirás instrucciones en breve.',
+      );
+    } catch (err) {
+      if (axios.isAxiosError(err) && err.response?.data) {
+        const data = err.response.data as {
+          errors?: string[];
+          message?: string;
+        };
+        setError(
+          (Array.isArray(data.errors) && data.errors.join(' ')) ||
+            data.message ||
+            'No pudimos procesar la solicitud',
+        );
+      } else {
+        setError(
+          'Error de red. Verifica que el backend esté en marcha y VITE_API_URL en .env.',
+        );
+      }
+    } finally {
+      setLoading(false);
     }
-
-    alert(
-      'Se enviaron instrucciones al correo asociado a tu número de teléfono',
-    );
   };
 
   return (
     <div className='forgot-page'>
       <div className='forgot-card'>
         <img
-          src='/logo Buscali.jpg.jpg'
+          src='/Logo BusCali.jpg.jpg'
           alt='Logo BusCali'
           className='logo-top'
         />
 
         <h1>Recuperar Contraseña</h1>
-        <p>Ingresa tu dirección de correo para continuar</p>
+        <p>Ingresa tu correo electrónico registrado como conductor</p>
 
-        <input
-          type='email'
-          placeholder=' tu correo electrónico'
-          value={telefono}
-          onChange={(e) => setTelefono(e.target.value)}
-        />
+        <form onSubmit={handleSubmit}>
+          <input
+            type='email'
+            placeholder='Correo electrónico'
+            value={correo}
+            onChange={(e) => setCorreo(e.target.value)}
+            autoComplete='email'
+          />
 
-        <button className='btn-primary' onClick={handleSubmit}>
-          Enviar Código
-        </button>
+          {error && <p className='error'>{error}</p>}
+          {success && <p className='success'>{success}</p>}
 
-        <button className='btn-secondary' onClick={() => navigate('/')}>
-          Volver
-        </button>
+          <button type='submit' className='btn-primary' disabled={loading}>
+            {loading ? 'Enviando…' : 'Enviar enlace'}
+          </button>
+
+          <button
+            type='button'
+            className='btn-secondary'
+            onClick={() => navigate('/')}
+          >
+            Volver
+          </button>
+        </form>
       </div>
     </div>
   );
-};
-
-export default ForgotPassword;
-
-// /*return (
-//     // Retorna el JSX de la página
-//     <div style={{ padding: "20px", textAlign: "center" }}>
-//       {/* Contenedor con padding y centrado */}
-//       <h1>Recuperar Contraseña</h1>
-//       {/* Título de la página */}
-//       <p>Funcionalidad en desarrollo. Contacta al administrador.</p>
-//       {/* Mensaje temporal */}
-//       <button onClick={() => navigate("/")}>Volver al Login</button>
-//       {/* Botón para volver al login */}
-//     </div>
-// );
-// */
-
-// export default ForgotPassword;
-// // Exporta el componente por defecto
+}
