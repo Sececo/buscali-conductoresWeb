@@ -63,8 +63,11 @@ export default function Login() {
         const token =
           (response.data as { data?: { token?: string } })?.data?.token ??
           response.data?.token;
-        if (token) localStorage.setItem('authToken', token);
-        else localStorage.setItem('authToken', 'cookie-session');
+        const sessionValue = token ?? 'cookie-session';
+        const storage = remember ? localStorage : sessionStorage;
+        const other = remember ? sessionStorage : localStorage;
+        other.removeItem('authToken');
+        storage.setItem('authToken', sessionValue);
         navigate('/conductores');
       } else {
         setError('Respuesta inválida del servidor');
