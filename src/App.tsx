@@ -1,48 +1,47 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-// Importa componentes de React Router para manejar el enrutamiento de la aplicación
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import GestionConductores from "./presentation/pages/GestionConductores";
-// Importa el componente para gestionar conductores
 import RegistrarConductor from "./presentation/pages/RegistrarConductor";
-// Importa el componente para registrar un nuevo conductor
 import Login from "./presentation/pages/Login";
-// Importa el componente de la página de login
 import ForgotPassword from "./presentation/pages/ForgotPassword";
 import ResetPassword from "./presentation/pages/ResetPassword";
-// Importa el componente de recuperación de contraseña
 import AuthGuard from "./presentation/Components/AuthGuard.tsx";
-// Importa el componente de guardia de autenticación
+import { ROUTES } from "./presentation/routes";
 
 function App() {
-  // Define el componente principal de la aplicación
   return (
-    // Retorna el JSX que define la estructura de la aplicación
     <BrowserRouter>
-      {/* BrowserRouter envuelve la aplicación para habilitar el enrutamiento */}
       <Routes>
-        {/* Routes contiene todas las rutas definidas */}
-        <Route path="/" element={<Login />} />
-        {/* Ruta raíz que muestra el componente Login */}
-        <Route path="/login" element={<Login />} />
-        {/* Ruta /login que también muestra el componente Login */}
-        
+        <Route path={ROUTES.login} element={<Login />} />
+        <Route path="/login" element={<Navigate to={ROUTES.login} replace />} />
+
         <Route element={<AuthGuard />}>
-          {/* Rutas protegidas que solo pueden verse si el usuario está autenticado */}
-          <Route path="/conductores" element={<GestionConductores />} />
-          {/* Ruta /conductores que muestra el componente GestionConductores */}
-          <Route path="/conductores/registrar" element={<RegistrarConductor />} />
-          {/* Ruta /conductores/registrar que muestra el componente RegistrarConductor */}
+          <Route path={ROUTES.conductores} element={<GestionConductores />} />
+          <Route
+            path={ROUTES.registrarConductor}
+            element={<RegistrarConductor />}
+          />
         </Route>
-        <Route path="/forgot-password" element={<ForgotPassword />} />
-        <Route path="/reset-password" element={<ResetPassword />} />
-        
+
+        <Route
+          path={ROUTES.recuperarContrasena}
+          element={<ForgotPassword />}
+        />
+        <Route
+          path={ROUTES.restablecerContrasena}
+          element={<ResetPassword />}
+        />
+        {/* Rutas antiguas en inglés → redirección */}
+        <Route
+          path="/forgot-password"
+          element={<Navigate to={ROUTES.recuperarContrasena} replace />}
+        />
+        <Route
+          path="/reset-password"
+          element={<Navigate to={ROUTES.restablecerContrasena} replace />}
+        />
       </Routes>
     </BrowserRouter>
   );
 }
 
 export default App;
-// Exporta el componente App como exportación por defecto
-/*
-Inicializar con npm run dev
-// Comentario que indica cómo iniciar la aplicación en modo desarrollo
-*/

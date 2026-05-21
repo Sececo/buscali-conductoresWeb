@@ -6,13 +6,13 @@ export type RegisterField =
   | 'telefono'
   | 'contrasena';
 
-const CEDULA_RE = /^[0-9]{1,20}$/;
-const NOMBRE_CHARS_RE = /^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+$/;
-const PHONE_RE = /^\+?[0-9]{7,15}$/;
-/** Aproximación razonable a IsEmail; el backend valida el formato definitivo. */
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/i;
-const PASSWORD_RE =
-  /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,50}$/;
+import {
+  CEDULA_RE,
+  EMAIL_RE,
+  NOMBRE_CHARS_RE,
+  PASSWORD_RE,
+  PHONE_RE,
+} from './validationRules';
 
 export type FieldErrors = Partial<Record<RegisterField | 'general', string>>;
 

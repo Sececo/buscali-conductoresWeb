@@ -1,14 +1,14 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import axios from 'axios';
-
-const PASSWORD_RULE =
-  /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,50}$/;
-const TOKEN_RULE = /^[A-Za-z0-9]{32}$/;
-
-function normalizeToken(raw: string): string {
-  return raw.trim().replace(/\s/g, '');
-}
+import FieldError from '../Components/FieldError';
+import { ROUTES } from '../routes';
+import {
+  normalizeResetToken,
+  validateNewPasswordPair,
+  validateResetToken,
+  type AuthFieldErrors,
+} from '../utils/authFormValidators';
 
 export default function ResetPassword() {
   const [searchParams] = useSearchParams();
@@ -17,6 +17,7 @@ export default function ResetPassword() {
   const [validatingToken, setValidatingToken] = useState(false);
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
+  const [fieldErrors, setFieldErrors] = useState<AuthFieldErrors>({});
   const [error, setError] = useState('');
   const [info, setInfo] = useState('');
   const [loading, setLoading] = useState(false);
@@ -25,27 +26,29 @@ export default function ResetPassword() {
   useEffect(() => {
     const fromUrl = searchParams.get('token');
     if (fromUrl) {
-      const normalized = normalizeToken(fromUrl);
+      const normalized = normalizeResetToken(fromUrl);
       setTokenInput(normalized);
-      void validateToken(normalized, false);
+      void validateTokenRemote(normalized, false);
     }
   }, [searchParams]);
 
-  const validateToken = async (token: string, showInfoOnSuccess = true) => {
+  const validateTokenRemote = async (token: string, showInfoOnSuccess = true) => {
     setError('');
     setInfo('');
     setTokenValid(false);
+    setFieldErrors((prev) => {
+      const next = { ...prev };
+      delete next.token;
+      return next;
+    });
 
-    const code = normalizeToken(token);
-    if (!code) {
-      setError('Pega el código que viene en el correo o abre el enlace completo.');
+    const formatMsg = validateResetToken(token);
+    if (formatMsg) {
+      setFieldErrors((prev) => ({ ...prev, token: formatMsg }));
       return;
     }
-    if (!TOKEN_RULE.test(code)) {
-      setError('El código debe tener 32 caracteres (el que aparece después de token= en el enlace).');
-      return;
-    }
 
+    const code = normalizeResetToken(token);
     setValidatingToken(true);
     try {
       await axios.get(
@@ -79,25 +82,18 @@ export default function ResetPassword() {
     setError('');
     setInfo('');
 
-    const token = normalizeToken(tokenInput);
+    const token = normalizeResetToken(tokenInput);
     if (!tokenValid) {
       setError('Primero valida el código del correo.');
       return;
     }
-    if (!password || !confirm) {
-      setError('Completa ambos campos de contraseña');
+
+    const pwdErrors = validateNewPasswordPair(password, confirm);
+    if (Object.keys(pwdErrors).length > 0) {
+      setFieldErrors(pwdErrors);
       return;
     }
-    if (password !== confirm) {
-      setError('Las contraseñas no coinciden');
-      return;
-    }
-    if (!PASSWORD_RULE.test(password)) {
-      setError(
-        'La contraseña debe tener 8-50 caracteres, mayúscula, minúscula, número y símbolo (@$!%*?&).',
-      );
-      return;
-    }
+    setFieldErrors({});
 
     setLoading(true);
     try {
@@ -107,7 +103,7 @@ export default function ResetPassword() {
       });
       localStorage.removeItem('authToken');
       sessionStorage.removeItem('authToken');
-      navigate('/', {
+      navigate(ROUTES.login, {
         replace: true,
         state: {
           flash: 'Contraseña actualizada. Inicia sesión con tu nueva clave.',
@@ -132,6 +128,9 @@ export default function ResetPassword() {
     }
   };
 
+  const inputInvalid = (key: keyof AuthFieldErrors) =>
+    fieldErrors[key] ? 'input-invalid' : undefined;
+
   return (
     <div className='forgot-page'>
       <div className='forgot-card forgot-card-wide'>
@@ -144,28 +143,45 @@ export default function ResetPassword() {
         <h1>Nueva contraseña</h1>
         <p>Paso 1: código del correo · Paso 2: nueva clave (válida 15 min)</p>
 
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit} noValidate>
           <label className='field-label' htmlFor='reset-token'>
             Código de verificación
           </label>
           <input
             id='reset-token'
             type='text'
-            placeholder='Pega el código del enlace (32 caracteres)'
+            placeholder='32 caracteres del enlace del correo'
             value={tokenInput}
             onChange={(e) => {
               setTokenInput(e.target.value);
               setTokenValid(false);
+              setFieldErrors((prev) => {
+                const next = { ...prev };
+                delete next.token;
+                return next;
+              });
             }}
+            onBlur={() => {
+              const msg = validateResetToken(tokenInput);
+              setFieldErrors((prev) => {
+                const next = { ...prev };
+                if (msg) next.token = msg;
+                else delete next.token;
+                return next;
+              });
+            }}
+            className={inputInvalid('token')}
+            aria-invalid={!!fieldErrors.token}
             autoComplete='off'
             spellCheck={false}
           />
+          <FieldError id='err-reset-token' message={fieldErrors.token} />
 
           <button
             type='button'
             className='btn-secondary'
             disabled={validatingToken || !tokenInput.trim()}
-            onClick={() => validateToken(tokenInput)}
+            onClick={() => validateTokenRemote(tokenInput)}
           >
             {validatingToken ? 'Validando…' : 'Validar código'}
           </button>
@@ -178,17 +194,62 @@ export default function ResetPassword() {
               <input
                 id='new-password'
                 type='password'
-                placeholder='Nueva contraseña'
+                placeholder='Ej. MiClave1!'
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                  setFieldErrors((prev) => {
+                    const next = { ...prev };
+                    delete next.contrasena;
+                    delete next.confirmar;
+                    return next;
+                  });
+                }}
+                onBlur={() => {
+                  const errs = validateNewPasswordPair(password, confirm);
+                  setFieldErrors((prev) => ({
+                    ...prev,
+                    contrasena: errs.contrasena,
+                    confirmar: errs.confirmar,
+                  }));
+                }}
+                className={inputInvalid('contrasena')}
                 autoComplete='new-password'
               />
+              <FieldError
+                id='err-reset-pass'
+                message={fieldErrors.contrasena}
+              />
+
+              <label className='field-label' htmlFor='confirm-password'>
+                Confirmar contraseña
+              </label>
               <input
+                id='confirm-password'
                 type='password'
-                placeholder='Confirmar contraseña'
+                placeholder='Repite la contraseña'
                 value={confirm}
-                onChange={(e) => setConfirm(e.target.value)}
+                onChange={(e) => {
+                  setConfirm(e.target.value);
+                  setFieldErrors((prev) => {
+                    const next = { ...prev };
+                    delete next.confirmar;
+                    return next;
+                  });
+                }}
+                onBlur={() => {
+                  const errs = validateNewPasswordPair(password, confirm);
+                  setFieldErrors((prev) => ({
+                    ...prev,
+                    confirmar: errs.confirmar,
+                  }));
+                }}
+                className={inputInvalid('confirmar')}
                 autoComplete='new-password'
+              />
+              <FieldError
+                id='err-reset-confirm'
+                message={fieldErrors.confirmar}
               />
             </>
           )}
@@ -205,7 +266,7 @@ export default function ResetPassword() {
           <button
             type='button'
             className='btn-secondary'
-            onClick={() => navigate('/forgot-password')}
+            onClick={() => navigate(ROUTES.recuperarContrasena)}
           >
             Solicitar nuevo enlace
           </button>

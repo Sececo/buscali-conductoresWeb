@@ -58,4 +58,4 @@ La autenticación usa cookie httpOnly y, si aplica, token JWT en cabecera `Autho
 1. En el backend, `FRONTEND_URL` debe ser la URL donde abres el panel (ej. `http://localhost:4174` en preview).
 2. Sin `EMAIL_USER` / `EMAIL_PASS`, en desarrollo el enlace sale en la **consola del backend** al usar “Enviar enlace”.
 3. Con Gmail, usa una [contraseña de aplicación](https://myaccount.google.com/apppasswords) en `EMAIL_PASS`.
-4. El correo lleva a `/reset-password?token=…` para definir la nueva contraseña.
+4. El correo lleva a `/restablecer-contrasena?token=…` (las rutas `/forgot-password` y `/reset-password` redirigen solas).

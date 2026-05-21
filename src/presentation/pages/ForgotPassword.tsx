@@ -1,9 +1,13 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import FieldError from '../Components/FieldError';
+import { ROUTES } from '../routes';
+import { validateForgotEmail } from '../utils/authFormValidators';
 
 export default function ForgotPassword() {
   const [correo, setCorreo] = useState('');
+  const [correoError, setCorreoError] = useState<string | undefined>();
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [recoveryLink, setRecoveryLink] = useState('');
@@ -16,11 +20,13 @@ export default function ForgotPassword() {
     setSuccess('');
     setRecoveryLink('');
 
-    const email = correo.trim();
-    if (!email) {
-      setError('Ingresa tu correo electrónico');
+    const emailMsg = validateForgotEmail(correo);
+    if (emailMsg) {
+      setCorreoError(emailMsg);
       return;
     }
+    setCorreoError(undefined);
+    const email = correo.trim();
 
     setLoading(true);
     try {
@@ -67,17 +73,30 @@ export default function ForgotPassword() {
           className='logo-top'
         />
 
-        <h1>Recuperar Contraseña</h1>
-        <p>Ingresa tu correo electrónico registrado como conductor</p>
+        <h1>Recuperar contraseña</h1>
+        <p>Ingresa tu correo registrado como conductor</p>
 
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit} noValidate>
+          <label className='field-label' htmlFor='forgot-email'>
+            Correo electrónico
+          </label>
           <input
+            id='forgot-email'
             type='email'
-            placeholder='Correo electrónico'
+            placeholder='nombre@ejemplo.com'
             value={correo}
-            onChange={(e) => setCorreo(e.target.value)}
+            onChange={(e) => {
+              setCorreo(e.target.value);
+              setCorreoError(undefined);
+              setError('');
+            }}
+            onBlur={() => setCorreoError(validateForgotEmail(correo))}
+            className={correoError ? 'input-invalid' : undefined}
+            aria-invalid={!!correoError}
+            aria-describedby={correoError ? 'err-forgot-email' : undefined}
             autoComplete='email'
           />
+          <FieldError id='err-forgot-email' message={correoError} />
 
           {error && <p className='error'>{error}</p>}
           {success && <p className='success'>{success}</p>}
@@ -97,7 +116,7 @@ export default function ForgotPassword() {
           <button
             type='button'
             className='btn-secondary'
-            onClick={() => navigate('/')}
+            onClick={() => navigate(ROUTES.login)}
           >
             Volver
           </button>

@@ -305,6 +305,7 @@ tr:hover {
   box-shadow: 0 0 0 1px rgba(220, 38, 38, 0.25);
 }
 
+.field-error,
 .register-field-error {
   margin: 4px 0 6px;
   font-size: 13px;
@@ -650,6 +651,16 @@ p {
 /* Hover input */
 .input-group:hover {
   background: #e6e6e6;
+}
+
+.input-group-invalid {
+  outline: 2px solid #e74c3c;
+  outline-offset: 1px;
+}
+
+.forgot-card input.input-invalid {
+  border-color: #e74c3c;
+  outline: 2px solid rgba(231, 76, 60, 0.35);
 }
 
 /* Icono */
