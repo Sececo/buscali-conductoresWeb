@@ -1,73 +1,52 @@
-# React + TypeScript + Vite
+# BusCali — Panel de conductores (Web)
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Panel administrativo en **React + TypeScript + Vite** para gestionar conductores del sistema BusCali. Se conecta al backend en `buscali-backend`.
 
-Currently, two official plugins are available:
+## Requisitos
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- Node.js 18+
+- Backend BusCali en ejecución (por defecto `http://localhost:3000`)
 
-## React Compiler
+## Instalación
 
-The React Compiler is currently not compatible with SWC. See [this issue](https://github.com/vitejs/vite-plugin-react/issues/428) for tracking the progress.
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm install
+npm run setup
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+`npm run setup` copia `.env.example` → `.env` si aún no existe.
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+Variables en `.env`:
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```env
+VITE_API_URL=http://localhost:3000
 ```
+
+Tras cambiar `.env`, reinicia `npm run dev`.
+
+## Desarrollo
+
+```bash
+npm run dev
+```
+
+Abre [http://localhost:5173](http://localhost:5173).
+
+## Scripts
+
+| Comando | Descripción |
+|---------|-------------|
+| `npm run dev` | Servidor de desarrollo |
+| `npm run build` | Compilación de producción |
+| `npm run preview` | Vista previa del build |
+| `npm run lint` | ESLint |
+| `npm run setup` | Crear `.env` desde `.env.example` |
+
+## Flujo con el backend
+
+1. Inicia el backend (`npm run dev` en `buscali-backend`).
+2. Inicia este panel (`npm run dev`).
+3. Inicia sesión con teléfono y contraseña de un conductor registrado.
+4. Gestiona conductores (listar, crear, editar, eliminar).
+
+La autenticación usa cookie httpOnly y, si aplica, token JWT en cabecera `Authorization` (sesión en `localStorage` con “Recordarme” o en `sessionStorage` sin marcarlo).
