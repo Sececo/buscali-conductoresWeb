@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useCallback } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
   ConductorApiRepository,
@@ -25,22 +25,37 @@ function FieldError({ id, message }: { id: string; message?: string }) {
   );
 }
 
-export default function RegistrarConductor() {
-  const location = useLocation();
-  const conductorToEdit = location.state as Conductor | undefined;
+function buildInitialForm(conductorToEdit?: Conductor) {
+  if (conductorToEdit) {
+    return {
+      cedula: conductorToEdit.cedula,
+      nombre: conductorToEdit.nombre || '',
+      telefono: conductorToEdit.telefono || '',
+      correo_electronico: conductorToEdit.correo_electronico || '',
+      contrasena: '',
+      estado:
+        conductorToEdit.estado === 'Inactivo' ? 'Inactivo' : 'Activo',
+    };
+  }
+  return {
+    cedula: '',
+    nombre: '',
+    telefono: '',
+    correo_electronico: '',
+    contrasena: '',
+    estado: 'Activo',
+  };
+}
 
+function RegistrarConductorForm({
+  conductorToEdit,
+}: {
+  conductorToEdit?: Conductor;
+}) {
   const navigate = useNavigate();
   const repository = useMemo(() => new ConductorApiRepository(), []);
 
-  const [form, setForm] = useState({
-    cedula: conductorToEdit?.cedula || '',
-    nombre: conductorToEdit?.nombre || '',
-    telefono: conductorToEdit?.telefono || '',
-    correo_electronico: conductorToEdit?.correo_electronico || '',
-    contrasena: conductorToEdit?.contrasena || '',
-    estado:
-      conductorToEdit?.estado === 'Inactivo' ? 'Inactivo' : 'Activo',
-  });
+  const [form, setForm] = useState(() => buildInitialForm(conductorToEdit));
 
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
 
@@ -51,30 +66,6 @@ export default function RegistrarConductor() {
       return next;
     });
   }, []);
-
-  useEffect(() => {
-    setFieldErrors({});
-    if (conductorToEdit) {
-      setForm({
-        cedula: conductorToEdit.cedula,
-        nombre: conductorToEdit.nombre || '',
-        telefono: conductorToEdit.telefono || '',
-        correo_electronico: conductorToEdit.correo_electronico || '',
-        contrasena: '',
-        estado:
-          conductorToEdit.estado === 'Inactivo' ? 'Inactivo' : 'Activo',
-      });
-    } else {
-      setForm({
-        cedula: '',
-        nombre: '',
-        telefono: '',
-        correo_electronico: '',
-        contrasena: '',
-        estado: 'Activo',
-      });
-    }
-  }, [conductorToEdit]);
 
   const registerFormPayload = useMemo(
     () => ({
@@ -358,5 +349,17 @@ export default function RegistrarConductor() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function RegistrarConductor() {
+  const location = useLocation();
+  const conductorToEdit = location.state as Conductor | undefined;
+
+  return (
+    <RegistrarConductorForm
+      key={conductorToEdit?.cedula ?? 'new'}
+      conductorToEdit={conductorToEdit}
+    />
   );
 }
