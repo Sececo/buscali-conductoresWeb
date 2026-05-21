@@ -1,9 +1,9 @@
 // Importamos hooks de React
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 // useState → permite guardar datos (estado) dentro del componente
 
 // Importamos navegación entre páginas
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 // useNavigate → permite redirigir a otra vista (ej: después del login)
 
 import axios from 'axios';
@@ -12,7 +12,18 @@ import axios from 'axios';
 export default function Login() {
   // Definimos el componente funcional Login como exportación por defecto
   const navigate = useNavigate();
+  const location = useLocation();
   // navigate → función que permite cambiar de ruta en la aplicación
+
+  const [flash, setFlash] = useState('');
+
+  useEffect(() => {
+    const msg = (location.state as { flash?: string } | null)?.flash;
+    if (msg) {
+      setFlash(msg);
+      navigate(location.pathname, { replace: true, state: {} });
+    }
+  }, [location, navigate]);
 
   // Estado para guardar el teléfono que escribe el usuario
   const [telefono, setTelefono] = useState('');
@@ -165,6 +176,7 @@ export default function Login() {
             </div>
 
             {/* ❌ Mensaje de error */}
+            {flash && <p className='success'>{flash}</p>}
             {error && <p className='error'>{error}</p>}
             {/* Solo se muestra si hay error (renderizado condicional) */}
 

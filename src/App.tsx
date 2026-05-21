@@ -7,6 +7,7 @@ import RegistrarConductor from "./presentation/pages/RegistrarConductor";
 import Login from "./presentation/pages/Login";
 // Importa el componente de la página de login
 import ForgotPassword from "./presentation/pages/ForgotPassword";
+import ResetPassword from "./presentation/pages/ResetPassword";
 // Importa el componente de recuperación de contraseña
 import AuthGuard from "./presentation/Components/AuthGuard.tsx";
 // Importa el componente de guardia de autenticación
@@ -32,7 +33,7 @@ function App() {
           {/* Ruta /conductores/registrar que muestra el componente RegistrarConductor */}
         </Route>
         <Route path="/forgot-password" element={<ForgotPassword />} />
-        {/* Ruta /forgot-password que muestra el componente ForgotPassword */}
+        <Route path="/reset-password" element={<ResetPassword />} />
         
       </Routes>
     </BrowserRouter>

@@ -6,6 +6,7 @@ export default function ForgotPassword() {
   const [correo, setCorreo] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [recoveryLink, setRecoveryLink] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
@@ -13,6 +14,7 @@ export default function ForgotPassword() {
     e.preventDefault();
     setError('');
     setSuccess('');
+    setRecoveryLink('');
 
     const email = correo.trim();
     if (!email) {
@@ -22,12 +24,19 @@ export default function ForgotPassword() {
 
     setLoading(true);
     try {
-      await axios.post('/api/v1/conductores/forgot-password', {
+      const { data } = await axios.post<{
+        message?: string;
+        data?: { hint?: string; recoveryLink?: string };
+      }>('/api/v1/conductores/forgot-password', {
         correo_electronico: email,
       });
+      const hint = data?.data?.hint ?? data?.message;
+      const link = data?.data?.recoveryLink;
       setSuccess(
-        'Si el correo está registrado, recibirás instrucciones en breve.',
+        hint ||
+          'Si el correo está registrado, recibirás instrucciones en breve.',
       );
+      if (link) setRecoveryLink(link);
     } catch (err) {
       if (axios.isAxiosError(err) && err.response?.data) {
         const data = err.response.data as {
@@ -72,6 +81,14 @@ export default function ForgotPassword() {
 
           {error && <p className='error'>{error}</p>}
           {success && <p className='success'>{success}</p>}
+          {recoveryLink && (
+            <p className='recovery-link'>
+              <span>Enlace directo (desarrollo):</span>
+              <a href={recoveryLink} target='_blank' rel='noreferrer'>
+                Abrir para cambiar contraseña
+              </a>
+            </p>
+          )}
 
           <button type='submit' className='btn-primary' disabled={loading}>
             {loading ? 'Enviando…' : 'Enviar enlace'}

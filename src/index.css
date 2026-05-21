@@ -675,6 +675,28 @@ p {
   text-align: center;
 }
 
+.success {
+  color: #16a34a;
+  font-size: 13px;
+  margin: 5px 0 10px;
+  text-align: center;
+}
+
+.recovery-link {
+  font-size: 12px;
+  margin: 8px 0 12px;
+  text-align: center;
+  line-height: 1.4;
+}
+
+.recovery-link a {
+  color: #2563eb;
+  font-weight: 600;
+  display: block;
+  margin-top: 4px;
+  word-break: break-all;
+}
+
 /* Opciones (checkbox + link) */
 .options {
   display: flex;
@@ -768,6 +790,19 @@ p {
   width: 350px;
   text-align: center;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+}
+
+.forgot-card-wide {
+  width: min(420px, 92vw);
+}
+
+.field-label {
+  display: block;
+  text-align: left;
+  font-size: 13px;
+  font-weight: 600;
+  color: #334155;
+  margin: 12px 0 6px;
 }
 
 /*LOGO*/

@@ -7,9 +7,13 @@ function normalizeOrigin(url: string | undefined): string {
 
 /**
  * Origen del backend (sin barra final).
- * Si no defines VITE_API_URL, se usa http://localhost:3000 (PORT por defecto del backend).
+ * Con VITE_USE_PROXY=true las peticiones van a /api en el mismo host (Vite proxy → backend);
+ * evita CORS en dev y en `npm run preview` (puerto 4173).
  */
-export const API_ORIGIN = normalizeOrigin(import.meta.env.VITE_API_URL);
+const useProxy = import.meta.env.VITE_USE_PROXY === 'true';
+export const API_ORIGIN = useProxy
+  ? ''
+  : normalizeOrigin(import.meta.env.VITE_API_URL);
 
 function getStoredAuthToken(): string | null {
   return (
