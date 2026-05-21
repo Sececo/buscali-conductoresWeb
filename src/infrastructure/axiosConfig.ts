@@ -11,5 +11,20 @@ function normalizeOrigin(url: string | undefined): string {
  */
 export const API_ORIGIN = normalizeOrigin(import.meta.env.VITE_API_URL);
 
+function getStoredAuthToken(): string | null {
+  return (
+    localStorage.getItem('authToken') ?? sessionStorage.getItem('authToken')
+  );
+}
+
+function attachAuthHeader(config: import('axios').InternalAxiosRequestConfig) {
+  const token = getStoredAuthToken();
+  if (token && token !== 'cookie-session') {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+}
+
 axios.defaults.withCredentials = true;
 axios.defaults.baseURL = API_ORIGIN;
+axios.interceptors.request.use(attachAuthHeader);

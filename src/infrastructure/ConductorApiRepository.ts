@@ -27,6 +27,16 @@ const api = axios.create({
   withCredentials: true,
 });
 
+api.interceptors.request.use((config) => {
+  const token =
+    localStorage.getItem('authToken') ??
+    sessionStorage.getItem('authToken');
+  if (token && token !== 'cookie-session') {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
 type ApiSuccess<T> = {
   status?: string;
   data?: T;
