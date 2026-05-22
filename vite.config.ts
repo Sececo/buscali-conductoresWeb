@@ -17,6 +17,11 @@ export default defineConfig(({ mode }) => {
   return {
     plugins: [react()],
     server: { proxy },
-    preview: { proxy },
+    // Debe coincidir con FRONTEND_URL del backend (enlaces del correo de recuperación)
+    preview: {
+      port: 4174,
+      strictPort: true,
+      proxy,
+    },
   }
 })
