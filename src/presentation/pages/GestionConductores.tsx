@@ -6,8 +6,7 @@ import { ConductorApiRepository } from '../../infrastructure/ConductorApiReposit
 import { GetConductores } from '../../application/useCases/GetConductores';
 import { DeleteConductor } from '../../application/useCases/DeleteConductor';
 import axios from 'axios';
-// import axios from "axios";
-// Importa axios para hacer peticiones HTTP
+import { API_CONDUCTORES } from '../../infrastructure/axiosConfig';
 import type { Conductor } from '../../domain/entities/Conductor';
 // Importa el tipo Conductor
 
@@ -84,7 +83,7 @@ export default function GestionConductores() {
     sessionStorage.removeItem('authToken');
     localStorage.removeItem('isAuthenticated');
     try {
-      await axios.post('/api/v1/conductores/logout');
+      await axios.post(API_CONDUCTORES.logout);
       // Petición para cerrar sesión
     } catch (error) {
       console.error('Error cerrando sesión:', error);

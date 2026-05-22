@@ -2,9 +2,9 @@ import axios from 'axios';
 import type { Conductor } from '../domain/entities/Conductor';
 import type { ConductorRepository } from '../domain/repositories/ConductorRepository';
 
-import { API_ORIGIN } from './axiosConfig';
+import { API_BASE, API_CONDUCTORES } from './axiosConfig';
 
-const CONDUCTORES_BASE = `${API_ORIGIN}/api/v1/conductores`;
+const CONDUCTORES_BASE = API_CONDUCTORES.base;
 
 /** Error con lista de mensajes tal cual devuelve el backend (validación 400). */
 export class ApiValidationError extends Error {
@@ -24,6 +24,7 @@ export class ApiValidationError extends Error {
  * las cookies httpOnly usadas para autenticación JWT.
  */
 const api = axios.create({
+  baseURL: API_BASE,
   withCredentials: true,
 });
 

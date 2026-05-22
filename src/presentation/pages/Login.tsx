@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { API_CONDUCTORES } from '../../infrastructure/axiosConfig';
 import FieldError from '../Components/FieldError';
 import { ROUTES } from '../routes';
 import {
@@ -48,7 +49,7 @@ export default function Login() {
     setLoading(true);
 
     try {
-      const response = await axios.post('/api/v1/conductores/login', {
+      const response = await axios.post(API_CONDUCTORES.login, {
         telefono: telefono.replace(/\D/g, ''),
         contrasena: password,
       });
