@@ -7,7 +7,8 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "vite preview",
+    "preview": "vite preview --port 4174",
+    "preview:restart": "powershell -NoProfile -Command \"$c=Get-NetTCPConnection -LocalPort 4174 -State Listen -EA 0|Select -First 1; if($c){Stop-Process -Id $c.OwningProcess -Force -EA 0; Start-Sleep 1}\" && vite preview --port 4174",
     "setup": "node -e \"const fs=require('fs');if(!fs.existsSync('.env')){fs.copyFileSync('.env.example','.env');console.log('Creado .env');}else{console.log('.env ya existe');}\""
   },
   "dependencies": {
