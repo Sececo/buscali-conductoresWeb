@@ -3,5 +3,18 @@
   publish = "dist"
 
 [build.environment]
-  VITE_API_URL = "https://buscali-backend.onrender.com"
-  VITE_USE_PROXY = "false"
+  # En Netlify las peticiones van a /api/v1 del mismo dominio (redirect abajo → Render)
+  VITE_USE_PROXY = "true"
+
+# Proxy en el servidor de Netlify: evita CORS (misma origen para el navegador)
+[[redirects]]
+  from = "/api/*"
+  to = "https://buscali-backend.onrender.com/api/:splat"
+  status = 200
+  force = true
+
+# SPA React Router
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
