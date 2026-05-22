@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { API_CONDUCTORES } from '../../infrastructure/axiosConfig';
 import FieldError from '../Components/FieldError';
 import { ROUTES } from '../routes';
 import { validateForgotEmail } from '../utils/authFormValidators';
@@ -33,7 +34,7 @@ export default function ForgotPassword() {
       const { data } = await axios.post<{
         message?: string;
         data?: { hint?: string; recoveryLink?: string };
-      }>('/api/v1/conductores/forgot-password', {
+      }>(API_CONDUCTORES.forgotPassword, {
         correo_electronico: email,
       });
       const hint = data?.data?.hint ?? data?.message;

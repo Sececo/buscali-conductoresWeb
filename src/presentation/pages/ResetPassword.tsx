@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import axios from 'axios';
+import { API_CONDUCTORES } from '../../infrastructure/axiosConfig';
 import FieldError from '../Components/FieldError';
 import { ROUTES } from '../routes';
 import {
@@ -51,9 +52,7 @@ export default function ResetPassword() {
     const code = normalizeResetToken(token);
     setValidatingToken(true);
     try {
-      await axios.get(
-        `/api/v1/conductores/reset-password/validate/${encodeURIComponent(code)}`,
-      );
+      await axios.get(API_CONDUCTORES.resetPasswordValidate(code));
       setTokenValid(true);
       if (showInfoOnSuccess) {
         setInfo('Código válido. Define tu nueva contraseña.');
@@ -97,7 +96,7 @@ export default function ResetPassword() {
 
     setLoading(true);
     try {
-      await axios.post('/api/v1/conductores/reset-password', {
+      await axios.post(API_CONDUCTORES.resetPassword, {
         token,
         nueva_contrasena: password,
       });
