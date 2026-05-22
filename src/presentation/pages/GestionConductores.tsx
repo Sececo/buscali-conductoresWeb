@@ -81,6 +81,7 @@ export default function GestionConductores() {
   const handleLogout = async () => {
     // handleLogout: función para cerrar sesión
     localStorage.removeItem('authToken');
+    sessionStorage.removeItem('authToken');
     localStorage.removeItem('isAuthenticated');
     try {
       await axios.post('/api/v1/conductores/logout');
@@ -186,7 +187,7 @@ export default function GestionConductores() {
           {/* Botón para editar conductor */}
         </div>
 
-        <div className='table container'>
+        <div className='table-container'>
           <table>
             {/* Tabla para mostrar conductores */}
             <thead>

@@ -1,84 +1,81 @@
-// Importamos hooks de React
-import { useState } from 'react';
-// useState → permite guardar datos (estado) dentro del componente
-
-// Importamos navegación entre páginas
-import { useNavigate } from 'react-router-dom';
-// useNavigate → permite redirigir a otra vista (ej: después del login)
-
+import { useEffect, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-// axios → biblioteca para hacer peticiones HTTP (aunque no se usa en este código aún)
+import FieldError from '../Components/FieldError';
+import { ROUTES } from '../routes';
+import {
+  validateLoginField,
+  validateLoginForm,
+  type AuthFieldErrors,
+} from '../utils/authFormValidators';
 
 export default function Login() {
-  // Definimos el componente funcional Login como exportación por defecto
   const navigate = useNavigate();
-  // navigate → función que permite cambiar de ruta en la aplicación
-
-  // Estado para guardar el teléfono que escribe el usuario
+  const location = useLocation();
+  const [flash, setFlash] = useState('');
   const [telefono, setTelefono] = useState('');
-  // useState("") → inicializa el estado con una cadena vacía
-  // telefono → variable que contiene el valor actual del estado
-  // setTelefono → función para cambiar el valor del estado
-
-  // Estado para guardar la contraseña
   const [password, setPassword] = useState('');
-  // password → almacena el valor del input de contraseña
-  // setPassword → función para actualizar el estado de la contraseña
-
-  // Estado para mostrar mensajes de error
+  const [fieldErrors, setFieldErrors] = useState<AuthFieldErrors>({});
   const [error, setError] = useState('');
-  // error → almacena el mensaje de error a mostrar
-  // setError → función para actualizar el mensaje de error
-
-  // Estado para saber si el usuario quiere ser recordado
   const [remember, setRemember] = useState(false);
-  // remember → booleano que indica si el usuario marcó "Recordarme"
-  // setRemember → función para cambiar el estado de recordar
+  const [loading, setLoading] = useState(false);
 
-  //  Datos simulados (mock)
-  // Esto reemplaza temporalmente al backend
-  //const usuarioMock = {
-  //  telefono: "3001234567", // Número de teléfono simulado para login
-  //  password: "1234", // Contraseña simulada para login
-  //};
+  useEffect(() => {
+    const msg = (location.state as { flash?: string } | null)?.flash;
+    if (msg) {
+      setFlash(msg);
+      navigate(location.pathname, { replace: true, state: {} });
+    }
+  }, [location, navigate]);
 
-  // Función que se ejecuta al enviar el formulario
+  const clearField = (key: keyof AuthFieldErrors) => {
+    setFieldErrors((prev) => {
+      const next = { ...prev };
+      delete next[key];
+      return next;
+    });
+  };
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    if (!telefono || !password) {
-      setError('Todos los campos son obligatorios');
+    setError('');
+    const local = validateLoginForm({ telefono, contrasena: password });
+    if (Object.keys(local).length > 0) {
+      setFieldErrors(local);
       return;
     }
+    setFieldErrors({});
+    setLoading(true);
 
     try {
-      // baseURL = VITE_API_URL en axiosConfig; el API real está bajo /api/v1/conductores
-      const response = await axios.post('/conductores/login', {
-        telefono,
+      const response = await axios.post('/api/v1/conductores/login', {
+        telefono: telefono.replace(/\D/g, ''),
         contrasena: password,
       });
 
-      // Si la petición es exitosa (el back-end devuelve 200), guarda sesión y redirige
       if (response.status === 200) {
         const token =
           (response.data as { data?: { token?: string } })?.data?.token ??
           response.data?.token;
-        if (token) localStorage.setItem('authToken', token);
-        else localStorage.setItem('authToken', 'cookie-session');
-        navigate('/conductores');
+        const sessionValue = token ?? 'cookie-session';
+        const storage = remember ? localStorage : sessionStorage;
+        const other = remember ? sessionStorage : localStorage;
+        other.removeItem('authToken');
+        storage.setItem('authToken', sessionValue);
+        navigate(ROUTES.conductores);
       } else {
         setError('Respuesta inválida del servidor');
       }
-    } catch (error) {
-      if (axios.isAxiosError(error)) {
-        if (!error.response) {
+    } catch (err) {
+      if (axios.isAxiosError(err)) {
+        if (!err.response) {
           setError(
-            'No hay respuesta del servidor. Comprueba que el backend esté en marcha y que VITE_API_URL en .env sea el mismo puerto (ej. http://localhost:3001). Reinicia "npm run dev" del front tras cambiar .env.',
+            'No hay respuesta del servidor. Comprueba que el backend esté en marcha.',
           );
           return;
         }
-        const status = error.response.status;
-        const body = error.response.data as {
+        const status = err.response.status;
+        const body = err.response.data as {
           message?: string;
           errors?: string[];
         };
@@ -89,110 +86,122 @@ export default function Login() {
         if (status === 401) {
           setError(detail || 'Teléfono o contraseña incorrectos');
         } else if (status === 400) {
-          setError(detail ? `Validación: ${detail}` : 'Datos inválidos');
-        } else if (status === 404) {
-          setError(
-            'Ruta del API no encontrada (404). Revisa que VITE_API_URL apunte al backend correcto.',
-          );
+          setError(detail || 'Datos inválidos');
         } else {
           setError(detail || `Error del servidor (${status})`);
         }
       } else {
         setError('Error inesperado. Inténtalo de nuevo.');
       }
+    } finally {
+      setLoading(false);
     }
   };
+
+  const inputInvalid = (key: keyof AuthFieldErrors) =>
+    fieldErrors[key] ? 'input-invalid' : undefined;
 
   return (
     <>
       <div className='background-blur'></div>
-
-      {/* Contenedor principal (fondo + centrado) */}
       <div className='login-container'>
-        {/* Tarjeta del login */}
         <div className='login-card'>
-          {/* Imagen circular en la parte superior */}
-          <img
-            src='/Logo BusCali.jpg.jpg'
-            // src: ruta de la imagen (reemplazarla con la ruta correcta)
+          <img src='/Logo BusCali.jpg.jpg' alt='Logo BusCali' className='login-logo' />
 
-            // alt: texto alternativo si la imagen no carga
-            className='login-logo'
-            // className: clase CSS para estilos de imagen circular
-          />
-
-          {/* Formulario */}
-          <form onSubmit={handleLogin}>
-            {/* 📱 Input de teléfono */}
-            <div className='input-group'>
-              <span className='icon'></span>
-              {/* Icono visual del teléfono */}
-
+          <form onSubmit={handleLogin} noValidate>
+            <div
+              className={`input-group${fieldErrors.telefono ? ' input-group-invalid' : ''}`}
+            >
               <input
-                type='text'
-                // Tipo de input: texto (permite ingresar caracteres alfanuméricos)
-                placeholder='Teléfono'
-                // Texto que aparece cuando el input está vacío
+                type='tel'
+                name='telefono'
+                placeholder='Teléfono (solo números)'
                 value={telefono}
-                // Muestra el valor actual del estado
-
-                onChange={(e) => setTelefono(e.target.value.replace(/\D/g, ''))}
-                // Cada vez que escribe:
-                // e.target.value → lo que el usuario escribe
-                // replace(/\D/g, "") → elimina TODO lo que NO sea número
+                onChange={(e) => {
+                  setTelefono(e.target.value.replace(/\D/g, ''));
+                  clearField('telefono');
+                  setError('');
+                }}
+                onBlur={() => {
+                  const msg = validateLoginField('telefono', {
+                    telefono,
+                    contrasena: password,
+                  });
+                  setFieldErrors((prev) => {
+                    const next = { ...prev };
+                    if (msg) next.telefono = msg;
+                    else delete next.telefono;
+                    return next;
+                  });
+                }}
+                className={inputInvalid('telefono')}
+                aria-invalid={!!fieldErrors.telefono}
+                aria-describedby={
+                  fieldErrors.telefono ? 'err-login-telefono' : undefined
+                }
+                autoComplete='tel'
               />
+              <FieldError id='err-login-telefono' message={fieldErrors.telefono} />
             </div>
 
-            {/* 🔒 Input de contraseña */}
-            <div className='input-group'>
-              <span className='icon'></span>
-              {/* Icono visual de candado */}
-
+            <div
+              className={`input-group${fieldErrors.contrasena ? ' input-group-invalid' : ''}`}
+            >
               <input
                 type='password'
-                // Tipo de input: contraseña (oculta los caracteres con puntos o asteriscos)
-                placeholder='********'
-                // Placeholder con asteriscos para indicar campo de contraseña
+                name='contrasena'
+                placeholder='Contraseña'
                 value={password}
-                // Muestra el valor actual
-
-                onChange={(e) => setPassword(e.target.value)}
-                // Guarda lo que escribe el usuario en el estado password
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                  clearField('contrasena');
+                  setError('');
+                }}
+                onBlur={() => {
+                  const msg = validateLoginField('contrasena', {
+                    telefono,
+                    contrasena: password,
+                  });
+                  setFieldErrors((prev) => {
+                    const next = { ...prev };
+                    if (msg) next.contrasena = msg;
+                    else delete next.contrasena;
+                    return next;
+                  });
+                }}
+                className={inputInvalid('contrasena')}
+                aria-invalid={!!fieldErrors.contrasena}
+                aria-describedby={
+                  fieldErrors.contrasena ? 'err-login-pass' : undefined
+                }
+                autoComplete='current-password'
               />
+              <FieldError id='err-login-pass' message={fieldErrors.contrasena} />
             </div>
 
-            {/* ❌ Mensaje de error */}
+            {flash && <p className='success'>{flash}</p>}
             {error && <p className='error'>{error}</p>}
-            {/* Solo se muestra si hay error (renderizado condicional) */}
 
-            {/* ⚙️ Opciones */}
             <div className='options'>
               <label>
                 <input
                   type='checkbox'
-                  // Tipo checkbox para selección binaria
                   checked={remember}
-                  // Estado del checkbox ligado a remember
-
                   onChange={() => setRemember(!remember)}
-                  // Cambia entre true/false al hacer clic
                 />
                 Recordarme
               </label>
-
               <span
                 className='forgot'
-                onClick={() => navigate('/forgot-password')}
+                onClick={() => navigate(ROUTES.recuperarContrasena)}
               >
                 ¿Olvidaste tu contraseña?
               </span>
             </div>
 
-            {/* 🔘 Botón */}
-            <button type='submit' className='login-btn'>
-              Iniciar Sesión
+            <button type='submit' className='login-btn' disabled={loading}>
+              {loading ? 'Entrando…' : 'Iniciar Sesión'}
             </button>
-            {/* type="submit" → activa el onSubmit del form, ejecutando handleLogin */}
           </form>
         </div>
       </div>

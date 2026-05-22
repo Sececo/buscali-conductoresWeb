@@ -3,7 +3,9 @@ import { Navigate, Outlet } from "react-router-dom";
 
 const AuthGuard = () => {
   // Define el componente AuthGuard como función
-  const token = localStorage.getItem("authToken");
+  const token =
+    localStorage.getItem("authToken") ??
+    sessionStorage.getItem("authToken");
   const isAuth = Boolean(token);
   // isAuth: valida si existe un token de sesión en localStorage
 

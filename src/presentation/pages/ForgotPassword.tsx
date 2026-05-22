@@ -1,72 +1,127 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
+import FieldError from '../Components/FieldError';
+import { ROUTES } from '../routes';
+import { validateForgotEmail } from '../utils/authFormValidators';
 
-const ForgotPassword = () => {
-  const [telefono, setTelefono] = useState('');
+export default function ForgotPassword() {
+  const [correo, setCorreo] = useState('');
+  const [correoError, setCorreoError] = useState<string | undefined>();
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+  const [recoveryLink, setRecoveryLink] = useState('');
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  const handleSubmit = () => {
-    if (!telefono) {
-      alert('Por favor ingresa tu número de teléfono');
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    setSuccess('');
+    setRecoveryLink('');
+
+    const emailMsg = validateForgotEmail(correo);
+    if (emailMsg) {
+      setCorreoError(emailMsg);
       return;
     }
+    setCorreoError(undefined);
+    const email = correo.trim();
 
-    if (!/^3\d{9}$/.test(telefono)) {
-      alert('Ingresa un número válido (ej: 3001234567)');
-      return;
+    setLoading(true);
+    try {
+      const { data } = await axios.post<{
+        message?: string;
+        data?: { hint?: string; recoveryLink?: string };
+      }>('/api/v1/conductores/forgot-password', {
+        correo_electronico: email,
+      });
+      const hint = data?.data?.hint ?? data?.message;
+      const link = data?.data?.recoveryLink;
+      setSuccess(
+        hint ||
+          'Si el correo está registrado, recibirás instrucciones en breve.',
+      );
+      if (link) setRecoveryLink(link);
+    } catch (err) {
+      if (axios.isAxiosError(err) && err.response?.data) {
+        const data = err.response.data as {
+          errors?: string[];
+          message?: string;
+        };
+        setError(
+          (Array.isArray(data.errors) && data.errors.join(' ')) ||
+            data.message ||
+            'No pudimos procesar la solicitud',
+        );
+      } else {
+        setError(
+          'Error de red. Verifica que el backend esté en marcha y VITE_API_URL en .env.',
+        );
+      }
+    } finally {
+      setLoading(false);
     }
-
-    alert(
-      'Se enviaron instrucciones al correo asociado a tu número de teléfono',
-    );
   };
 
   return (
     <div className='forgot-page'>
       <div className='forgot-card'>
         <img
-          src='/logo Buscali.jpg.jpg'
+          src='/Logo BusCali.jpg.jpg'
           alt='Logo BusCali'
           className='logo-top'
         />
 
-        <h1>Recuperar Contraseña</h1>
-        <p>Ingresa tu dirección de correo para continuar</p>
+        <h1>Recuperar contraseña</h1>
+        <p>Ingresa tu correo registrado como conductor</p>
 
-        <input
-          type='email'
-          placeholder=' tu correo electrónico'
-          value={telefono}
-          onChange={(e) => setTelefono(e.target.value)}
-        />
+        <form onSubmit={handleSubmit} noValidate>
+          <label className='field-label' htmlFor='forgot-email'>
+            Correo electrónico
+          </label>
+          <input
+            id='forgot-email'
+            type='email'
+            placeholder='nombre@ejemplo.com'
+            value={correo}
+            onChange={(e) => {
+              setCorreo(e.target.value);
+              setCorreoError(undefined);
+              setError('');
+            }}
+            onBlur={() => setCorreoError(validateForgotEmail(correo))}
+            className={correoError ? 'input-invalid' : undefined}
+            aria-invalid={!!correoError}
+            aria-describedby={correoError ? 'err-forgot-email' : undefined}
+            autoComplete='email'
+          />
+          <FieldError id='err-forgot-email' message={correoError} />
 
-        <button className='btn-primary' onClick={handleSubmit}>
-          Enviar Código
-        </button>
+          {error && <p className='error'>{error}</p>}
+          {success && <p className='success'>{success}</p>}
+          {recoveryLink && (
+            <p className='recovery-link'>
+              <span>Enlace directo (desarrollo):</span>
+              <a href={recoveryLink} target='_blank' rel='noreferrer'>
+                Abrir para cambiar contraseña
+              </a>
+            </p>
+          )}
 
-        <button className='btn-secondary' onClick={() => navigate('/')}>
-          Volver
-        </button>
+          <button type='submit' className='btn-primary' disabled={loading}>
+            {loading ? 'Enviando…' : 'Enviar enlace'}
+          </button>
+
+          <button
+            type='button'
+            className='btn-secondary'
+            onClick={() => navigate(ROUTES.login)}
+          >
+            Volver
+          </button>
+        </form>
       </div>
     </div>
   );
-};
-
-export default ForgotPassword;
-
-// /*return (
-//     // Retorna el JSX de la página
-//     <div style={{ padding: "20px", textAlign: "center" }}>
-//       {/* Contenedor con padding y centrado */}
-//       <h1>Recuperar Contraseña</h1>
-//       {/* Título de la página */}
-//       <p>Funcionalidad en desarrollo. Contacta al administrador.</p>
-//       {/* Mensaje temporal */}
-//       <button onClick={() => navigate("/")}>Volver al Login</button>
-//       {/* Botón para volver al login */}
-//     </div>
-// );
-// */
-
-// export default ForgotPassword;
-// // Exporta el componente por defecto
+}
